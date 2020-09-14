@@ -2,10 +2,13 @@
 /*
 Plugin Name: Dellyman Logistics
 Plugin URI: https://dellyman.com/
-Description: Your shipping method plugin
+Description: Dellyman logistics shipping woocommerce plugin.
 Version: 1.0.0
 Author: Babatope Ajepe
 Author URI: https://dellyman.com/
+Stable tag: 1.0
+Version: 1.0 
+Tags: Nigeria, shipping, Delivery, Dellyman, logistics, Mattobell
  */
 
 /**
