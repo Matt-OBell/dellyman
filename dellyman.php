@@ -7,7 +7,7 @@ Version: 1.0.0
 Author: Babatope Ajepe
 Author URI: https://dellyman.com/
 Stable tag: 1.0
-Version: 1.0 
+Version: 1.0
 Tags: Nigeria, shipping, Delivery, Dellyman, logistics, Mattobell
  */
 
@@ -128,9 +128,9 @@ if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_
                         ),
                         'dellyman_company_id' => array(
                             'title' => 'Company ID',
-                            'type' => 'number',
+                            'type' => 'text',
                             'description' => 'Company ID',
-                            'default' => '',
+                            'default' => 762,
                         ),
                         //
                         'PickUpContactName' => array(
@@ -163,27 +163,38 @@ if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_
                     if ($this->settings['api_secret']) {
 
                         $response = wp_remote_post($url, $options);
-                        if (! is_wp_error($response)){
+                        if (!is_wp_error($response)) {
 
                             return json_decode($response['body'])->authentication_token;
                         }
                         return '';
-              
                     }
                 }
 
                 public function getCustomerAuthentication($token)
                 {
+               
                     if ($token) {
                         $url = $this->settings['dellyman_base_url'] . '/api/v1.0/CustomerValidation';
                         $options = ['body' => json_encode(["Email" => $this->settings['dlogin'], "Password" => $this->settings['dpassword']]), 'headers' => ['Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $token], 'timeout' => 60, 'redirection' => 5, 'blocking' => true, 'httpversion' => '1.0', 'sslverify' => false, 'data_format' => 'body'];
                         $body = json_decode(wp_remote_post($url, $options)['body']);
+                        if( !isset($body->CustomerAuth)     ){
+                            add_action('admin_notices', function () use ($body) {
+                                ?>
+                                <div class="error notice">
+                                    <p><?php _e($body->ResponseMessage); ?></p>
+                                </div>
+                                <?php
+                            });
+                            return ['auth' => '', 'cid' => ''];
+
+
+                        }
+                
 
                         return ['auth' => $body->CustomerAuth, 'cid' => $body->CustomerID];
-
                     }
                     return ['auth' => '', 'cid' => ''];
-
                 }
 
                 protected function _getStorePhysicalAddress()
@@ -205,9 +216,10 @@ if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_
                     $address_1 = $package["destination"]["address_1"];
                     $address_2 = $package["destination"]["address_2"];
 
-                    $payload = ["CustomerID" => $authentication['cid'],
+                    $payload = [
+                        "CustomerID" => $authentication['cid'],
 
-                        "CreatedThrough" => "web", "IsProductOrder" => 0, "PaymentMode" => "delivery", "ProductAmount" => [0], "CustomerID" => $authentication['cid'], "CustomerAuth" => $authentication['auth'], "VehicleID" => 1, "IsCoD" => 1, "PickupRequestedTime" => "06 AM to 09 PM", "PickupRequestedDate" => date('d/m/Y'), "PickupAddress" => $this->_getStorePhysicalAddress(), "DeliveryAddress" => [$address . ' ' . $city . ' ' . $state . ',' . $country],
+                        "CreatedThrough" => "web", "IsProductOrder" => 0, "PaymentMode" => "online", "ProductAmount" => [0], "CustomerID" => $authentication['cid'], "CustomerAuth" => $authentication['auth'], "VehicleID" => 1, "IsCoD" => 1, "PickupRequestedTime" => "06 AM to 09 PM", "PickupRequestedDate" => date('d/m/Y'), "PickupAddress" => $this->_getStorePhysicalAddress(), "DeliveryAddress" => [$address . ' ' . $city . ' ' . $state . ',' . $country],
 
                     ];
 
@@ -223,10 +235,11 @@ if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_
                     $payload = $this->_customerCalculculateAmountPayload($settings, $authentication, $package);
                     $options = ['body' => json_encode($payload), 'headers' => ['Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $token], 'timeout' => 60, 'redirection' => 5, 'blocking' => true, 'httpversion' => '1.0', 'sslverify' => false, 'data_format' => 'body'];
                     $body = json_decode(wp_remote_post($url, $options)['body']);
+                     
 
                     $this->settings['dellyman_company_id'] = $body->Companies[0]->CompanyID;
 
-                    return $body->Companies[0]->PackagePrice ? $body->Companies[0]->PackagePrice : 1000;
+                    return $body->Companies[0]->TotalPrice ? $body->Companies[0]->TotalPrice : 1000;
                 }
 
                 /**
@@ -280,18 +293,17 @@ if (in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get_
         }
         if (!get_post_meta($order_id, '_order_created_on_dellyman', true)) {
 
-            $payload = ["CustomerID" => $dellyman->dcustomer_id, "CompanyID" => intval($dellyman->settings['dellyman_company_id']), "CustomerAuth" => $dellyman->dcustomer_auth, "PaymentMode" => "pickup", "IsProductOrder" => 0, "AccountNumber" => "", "BankCode" => "", "VehicleID" => 1, "IsCoD" => 1, "PickUpContactName" => $dellyman->settings['PickUpContactName'], "PickUpContactNumber" => $dellyman->settings['PickUpContactNumber'], "PickUpGooglePlaceAddress" => $dellyman->settings['PickUpGooglePlaceAddress'], "PickUpLandmark" => " ", "PickUpRequestedDate" => date('d/m/Y'), "PickUpRequestedTime" => "06 AM to 09 PM", "DeliveryRequestedTime" => "06 AM to 09 PM", "Packages" => [["ProductAmount" => "0", "PackageDescription" => $order->get_order_number(), "DeliveryContactName" => $address['first_name'] . ' ' . $address['last_name'], "DeliveryContactNumber" => $address['phone'], "DeliveryGooglePlaceAddress" => $address['address_1'] . ' ' . $address['city'] . ' ' . $address['state'] . ' ' . $address['country'], "DeliveryLandmark" => ""]]];
+            $payload = ["CustomerID" => $dellyman->dcustomer_id, "CompanyID" => intval($dellyman->settings['dellyman_company_id']), "CustomerAuth" => $dellyman->dcustomer_auth, "PaymentMode" => "online", "IsProductOrder" => 0, "AccountNumber" => "", "BankCode" => "", "VehicleID" => 1, "IsCoD" => 1, "PickUpContactName" => $dellyman->settings['PickUpContactName'], "PickUpContactNumber" => $dellyman->settings['PickUpContactNumber'], "PickUpGooglePlaceAddress" => $dellyman->settings['PickUpGooglePlaceAddress'], "PickUpLandmark" => " ", "PickUpRequestedDate" => date('d/m/Y'), "PickUpRequestedTime" => "06 AM to 09 PM", "DeliveryRequestedTime" => "06 AM to 09 PM", "Packages" => [["ProductAmount" => "0", "PackageDescription" => $order->get_order_number(), "DeliveryContactName" => $address['first_name'] . ' ' . $address['last_name'], "DeliveryContactNumber" => $address['phone'], "DeliveryGooglePlaceAddress" => $address['address_1'] . ' ' . $address['city'] . ' ' . $address['state'] . ' ' . $address['country'], "DeliveryLandmark" => ""]]];
 
             $url = $dellyman->settings['dellyman_base_url'] . '/api/v1.0/CustomerPickupRequest';
             $options = ['body' => json_encode($payload), 'headers' => ['Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $dellyman->dtoken], 'timeout' => 60, 'redirection' => 5, 'blocking' => true, 'httpversion' => '1.0', 'sslverify' => false, 'data_format' => 'body'];
 
             $body = wp_remote_post($url, $options);
+            // die(var_dump($body));
 
             $order->update_meta_data('_order_created_on_dellyman', true);
             $order->save();
-
         }
-
     }
 
     add_filter('woocommerce_shipping_methods', 'dellyman_logistics_shipping_method');
