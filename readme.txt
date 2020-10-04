@@ -1,32 +1,22 @@
-=== woocommerce-dellyman ===
+=== Dellyman Logistics ===
+Contributors: Babatope Ajepe
+Tags: Logistics, Dellyman,Nigeria,Delivery
+Requires at least: 5.0
+Tested up to: 5.5.1
+Requires PHP: 7.0
+License: LGPL
+License URI: https://www.gnu.org/licenses/gpl-3.0.en.html
 
-Contributors:      (Babatope Ajepe)
-Plugin Name:       (woocommerce-dellyman)
-Plugin URI:        (web page for plugin)
-Tags:              (Nigeria, shipping, Delivery, Dellyman, logistics, Mattobell)
-Author URI:        (plugin authors site)
-Author:            (the plugin's author)
-Requires at least: (minimum required WP) 
-Stable tag:        (1.0.0)
-Version:           (1.0.0)
+Dellyman Logistics
 
 == Description ==
-WooCommerce dellyman shipping plugin is a wordPress/wooCommerce 
-extension that helps you automate dellyman shipping by 
-displaying shipping rates in cart/checkout page, 
-send the order to dellyman for it to be picked 
-by a dispatch rider.
+Dellyman partners with logistics companies who have committed to quality assets and well trained riders/drivers. Our delivery partners have experience and understand the importance of speed, safety and great customer service in fulfilling every customer order. 
 
 == Installation ==
+This section describes how to install the plugin and get it working.
 
-== Upgrade Notice ==
+Download and install the plugin from WordPress dashboard. 
 
-== Screenshots ==
+Activate the plugin through the ‘Plugins’ menu in WordPress.
 
-== Changelog ==
-
-== Frequently Asked Questions ==
-
-
-
-
+Go to woo-commerce shipping settings and configured the username and password
